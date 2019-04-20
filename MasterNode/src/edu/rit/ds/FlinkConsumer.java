@@ -10,7 +10,6 @@ import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
 public class FlinkConsumer {
 
 	public void transform() throws Exception {
-
 		Properties properties = new Properties();
 		properties.setProperty("bootstrap.servers", "localhost:9092");
 		properties.setProperty("zookeeper.connect", "localhost:2181");

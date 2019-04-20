@@ -26,7 +26,7 @@ public class WorkLoadGenerator {
 			String jsonText = out.toString();
 			kafkaProducer(jsonText);
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(10000);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -43,10 +43,10 @@ public class WorkLoadGenerator {
 
 		int result = r.nextInt(end - start) + start;
 
-		obj1.put("Temperature", new Integer(result));
-		obj1.put("Wind Direction", direction);
+		obj.put("temp", new Integer(result));
+		obj.put("Wind Direction", direction);
 		obj.put("Sensor Id", new Integer(1001));
-		obj.put("Data", obj1);
+//		obj.put("Data", obj1);
 		obj.put("longitude", new Double(13.0412658));
 		obj.put("latitude", new Double(13.0412658));
 		return obj;
@@ -62,7 +62,7 @@ public class WorkLoadGenerator {
 		KafkaProducer kafkaProducer = new KafkaProducer(properties);
 		try {
 
-			kafkaProducer.send(new ProducerRecord("test", jsonString, "test message - " + jsonString));
+			kafkaProducer.send(new ProducerRecord("test", jsonString));
 
 		} catch (Exception e) {
 			e.printStackTrace();
