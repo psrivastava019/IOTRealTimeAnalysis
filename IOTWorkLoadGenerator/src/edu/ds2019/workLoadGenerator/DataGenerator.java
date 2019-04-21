@@ -27,7 +27,7 @@ public class DataGenerator {
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		ArrayList<ArrayList<String>> grid = gridGenerate(4, 8);
+		ArrayList<ArrayList<String>> grid = gridGenerate(44, 88);
 		generateMap(grid);
 //		dumpDataCitiesJSON();
 		startAllNodes();

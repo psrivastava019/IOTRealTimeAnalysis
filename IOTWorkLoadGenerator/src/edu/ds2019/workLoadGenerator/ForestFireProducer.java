@@ -32,7 +32,7 @@ public class ForestFireProducer implements Runnable {
 				e.printStackTrace();
 			}
 			try {
-				Thread.sleep(50000);
+				Thread.sleep(1000);
 			} catch (InterruptedException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -52,7 +52,7 @@ public class ForestFireProducer implements Runnable {
 		
 		try {
 
-			kafkaProducer.send(new ProducerRecord("test", jsonString));
+			kafkaProducer.send(new ProducerRecord("testNew", jsonString));
 
 		} catch (Exception e) {
 			e.printStackTrace();
