@@ -101,8 +101,8 @@ public class ConsumerKafka {
 	
 	*/
 	
-	DataStream<String> finalStream;
-	public void transform() throws Exception {
+	/*DataStream<String> finalStream;
+	public DataStream<String> transform() throws Exception {
 		Properties properties = new Properties();
 		properties.setProperty("bootstrap.servers", "localhost:9092");
 		properties.setProperty("zookeeper.connect", "localhost:2181");
@@ -111,15 +111,17 @@ public class ConsumerKafka {
 		env.enableCheckpointing(5000);
 		DataStream<String> messageStream = env
 				.addSource(new FlinkKafkaConsumer09<>("test2", new SimpleStringSchema(), properties));
-		finalStream=messageStream.filter(x->x!=null);
+		//finalStream=messageStream.filter(x->x!=null);
 //		finalStream.print();
-		//		messageStream.filter(x->x!=null).
+		messageStream.filter(x->x!=null);
 //		InputStream stream= (InputStream) messageStream;
 //		Reader  inputStreamReader = new InputStreamReader(messageStream);
 		env.execute();
+		return messageStream;
 	}
 	
 	public DataStream<String> callTransform(){
+		System.out.println("Here");
 		 return finalStream;
 	}
 	
@@ -127,36 +129,43 @@ public class ConsumerKafka {
 		ConsumerKafka consumer = new ConsumerKafka();
 		consumer.transform();
 	}	
+	*/
 	
 	
 	
 	
-	
-/*	private final static String TOPIC = "test1";
+	private final static String TOPIC = "iotTest3";
     private final static String BOOTSTRAP_SERVERS ="localhost:9092";
-    private static Consumer<Long, String> createConsumer() {
+    static Object obj=new Object();
+     static Consumer<Long, String> createConsumer() {
         final Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
                                     BOOTSTRAP_SERVERS);
         props.put(ConsumerConfig.GROUP_ID_CONFIG,
-                                    "KafkaExampleConsumer");
+                                    "group01");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
                 LongDeserializer.class.getName());
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
                 StringDeserializer.class.getName());
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"earliest");
+        props.put("enable.auto.commit","true");
+        props.put("auto.commit.interval.ms","1000");
+        props.put("session.timeout.ms","30000");
         // Create the consumer using props.
         final Consumer<Long, String> consumer = new KafkaConsumer<>(props);
         // Subscribe to the topic.
         consumer.subscribe(Collections.singletonList(TOPIC));
+//        kafkaConsumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"earliest"); 
         return consumer;
     }
     
-    static void runConsumer() throws InterruptedException {
+    /*static ConsumerRecords<Long, String> runConsumer() throws InterruptedException {
         final Consumer<Long, String> consumer = createConsumer();
-        final int giveUp = 100;   int noRecordsCount = 0;
-        while (true) {
-            final ConsumerRecords<Long, String> consumerRecords =
-                    consumer.poll(1000);
+        final int giveUp = 10000;   int noRecordsCount = 0;
+         ConsumerRecords<Long, String> consumerRecords=null;
+//        while (true) {
+            consumerRecords =
+                    consumer.poll(10);
             if (consumerRecords.count()==0) {
             	System.out.println("Here");
                 noRecordsCount++;
@@ -170,10 +179,54 @@ public class ConsumerKafka {
 //            	writeDataToFile(record.value());
             });
             consumer.commitAsync();
-        }
+//        }
         consumer.close();
         System.out.println("DONE");
-    }
+        return consumerRecords;
+    }*/
+     public ConsumerRecords<Long, String> runConsumer(Consumer<Long, String> consumer) throws InterruptedException {
+//         final Consumer<Long, String> consumer = createConsumer();
+         final int giveUp = 10000;   int noRecordsCount = 0;
+          ConsumerRecords<Long, String> consumerRecords=null;
+//         while (true) {
+          synchronized (this) {
+        	  consumerRecords =
+                      consumer.poll(50);
+//        	  consumer.seekToBeginning(consumer.assignment());
+              if (consumerRecords.count()==0) {
+              	System.out.println("Here");
+                  noRecordsCount++;
+                /*  if (noRecordsCount > giveUp) break;
+                  else continue;*/
+              }
+              consumerRecords.forEach(record -> {
+                  System.out.printf("Consumer Record:(%d, %s, %d, %d)\n",
+                          record.key(), record.value(),
+                          record.partition(), record.offset());
+//              	writeDataToFile(record.value());
+              });
+              consumer.commitAsync();
+		}   
+          /*consumerRecords =
+                     consumer.poll(10);
+             if (consumerRecords.count()==0) {
+             	System.out.println("Here");
+                 noRecordsCount++;
+                 if (noRecordsCount > giveUp) break;
+                 else continue;
+             }
+             consumerRecords.forEach(record -> {
+                 System.out.printf("Consumer Record:(%d, %s, %d, %d)\n",
+                         record.key(), record.value(),
+                         record.partition(), record.offset());
+//             	writeDataToFile(record.value());
+             });*/
+            
+//         }
+//         consumer.close();
+         System.out.println("DONE");
+         return consumerRecords;
+     }
     
     public static void writeDataToFile(String completMessage) {
     	File file=new File("C:\\Users\\priya\\assignmentWorkspace\\ApllicationServer\\src\\edu\\rit\\ds\\sensorData.txt");
@@ -188,6 +241,7 @@ public class ConsumerKafka {
     	
     }
     public static void main(String... args) throws Exception {
-        runConsumer();
-    }*/
+    	Consumer<Long, String> cons=/*runConsumer();*/ createConsumer();
+//    	runConsumer(cons);
+    }
 }
