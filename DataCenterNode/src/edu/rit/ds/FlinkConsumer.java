@@ -57,217 +57,32 @@ public class FlinkConsumer implements Serializable {
 		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.enableCheckpointing(5000);
 		DataStream<String> messageStream = env
-				.addSource(new FlinkKafkaConsumer09<>("test1",  new SimpleStringSchema(), properties));
-		
-		FlinkKafkaProducer09<String> flinkKafkaProducer = createStringProducer("test1", "localhost:9092");
-		
-		
-//		fw=new FileWriter(file);
-		
-		
-		DataStream<Tuple2<String,String>> newMessageStream=messageStream.flatMap(new FlatMapFunction<String,Tuple2<String,String>>() {
-//			@Override  
-		
-			//@Override
-			/*@Override
-			
-			public void flatMap(String value, Collector<Tuple2<String, String>> out) throws Exception {
+				.addSource(new FlinkKafkaConsumer09<>("relayMasterToDC",  new SimpleStringSchema(), properties));
+
+		DataStream<String> newData = messageStream.flatMap(new FlatMapFunction<String, String>() {
+			Map<String,ObjectNode> map=new HashMap<>();
+			public void flatMap(String value, Collector<String> out) throws Exception {
 				ObjectMapper mapper = new ObjectMapper();
 				try {
 					JsonNode rootNode = mapper.readValue(value, JsonNode.class);
 					if (rootNode.isObject()) {
 						ObjectNode obj = mapper.convertValue(rootNode, ObjectNode.class);
 						if (obj.has("temp")) {
-		                    System.out.println("a=" + obj.get("temp").asInt()+"fd"+obj.toString());
-		                    if(obj.get("temp").asInt()>70) {
-		                    	out.collect(Tuple2.of("test2", value.toString()));
-		                    }
-		                    else {
-		                    	out.collect(Tuple2.of("test3", value.toString()));
-		                    }
+							System.out.println("a=" + obj.get("temp").asInt()+"fd"+obj.toString());
+							map.put(obj.get("id").toString(), obj);
+						}
 					}
+					System.out.println("map:" + arrafy(map));
+					out.collect(arrafy(map));
 				}
-			}
 				catch (java.io.IOException ex){
-		            ex.printStackTrace();
-		            
-		        }
-				
+						ex.printStackTrace();
+					}
 			}
-
-		});    
-		
-		newMessageStream.addSink(new FlinkKafkaProducer09<>(
-		        "test1",
-		        new KeyedSerializationSchema<Tuple2<String, String>>() {
-
-					@Override
-					public byte[] serializeKey(Tuple2<String, String> element) {
-						// TODO Auto-generated method stub
-						byte[] b=element.f0.getBytes();
-						return b;
-					}
-
-					@Override
-					public byte[] serializeValue(Tuple2<String, String> element) {
-						byte[] b=element.f1.getBytes();
-						return b;
-					}
-
-					@Override
-					public String getTargetTopic(Tuple2<String, String> element) {
-						// TODO Auto-generated method stub
-						return element.f0;
-					}
-		            
-		        },
-		        properties)
-		);*/
-			
-		
-			
-		Map<String,ObjectNode> map=new HashMap<>();
-		
-		@Override
-		
-		public void flatMap(String value, Collector<Tuple2<String, String>> out) throws Exception {
-			ObjectMapper mapper = new ObjectMapper();
-			try {
-				JsonNode rootNode = mapper.readValue(value, JsonNode.class);
-				if (rootNode.isObject()) {
-					ObjectNode obj = mapper.convertValue(rootNode, ObjectNode.class);
-					if (obj.has("temp")) {
-	                    System.out.println("a=" + obj.get("temp").asInt()+"fd"+obj.toString());
-	                    if(obj.get("temp").asInt()>70) {
-	                    	map.put(obj.get("id").toString(), obj);
-	                    	
-	                    	out.collect(Tuple2.of("test2", arrafy(map)));
-	                    }
-	                    else {
-	                    	map.put(obj.get("id").toString(), obj);
-	                    	out.collect(Tuple2.of("test3", arrafy(map)));
-	                    }
-				}
-			}
-		}
-			catch (java.io.IOException ex){
-	            ex.printStackTrace();
-	            
-	        }
-			
-		}
-
-	});    
-	
-	newMessageStream.addSink(new FlinkKafkaProducer09<>(
-	        "test1",
-	        new KeyedSerializationSchema<Tuple2<String, String>>() {
-
-				@Override
-				public byte[] serializeKey(Tuple2<String, String> element) {
-					// TODO Auto-generated method stub
-					byte[] b=element.f0.getBytes();
-					return b;
-				}
-
-				@Override
-				public byte[] serializeValue(Tuple2<String, String> element) {
-					byte[] b=element.f1.getBytes();
-					return b;
-				}
-
-				@Override
-				public String getTargetTopic(Tuple2<String, String> element) {
-					// TODO Auto-generated method stub
-					return element.f0;
-				}
-	            
-	        },
-	        properties)
-	);
-		  /*  public String map(String value) throws Exception {
-		    	
-		        ObjectMapper mapper = new ObjectMapper();
-		        try {
-		        	JsonNode rootNode = mapper.readValue(value, JsonNode.class);
-		            if (rootNode.isObject()) {
-//		                ObjectNode obj = (ObjectNode) rootNode;
-		            	ObjectNode obj = mapper.convertValue(rootNode, ObjectNode.class);
-		                if (obj.has("temp")) {
-		                    System.out.println("a=" + obj.get("temp").asInt()+"fd"+obj.toString());
-		                    if(obj.get("temp").asInt()>72) {
-		                    	return obj.toString();
-		                    }
-		                   else {
-		                	   System.out.println("a=" + obj.get("temp").asInt());
-//		                	   writeToFile(obj.toString());
-		                	   if(file!=null ) {
-		                		   fw=new FileWriter(file);
-		                		   fw.write(obj.toString());
-		                	   }
-		                	   else {
-		                		   file = new File("C:\\Users\\priya\\assignmentWorkspace\\DataCenterNode\\src\\edu\\rit\\ds\\sensorData.txt");
-		                	   }
-		                	    fw.write(obj.toString());
-		                		 
-		                    }
-		                }
-		            }
-		            return null;
-		        }catch (java.io.IOException ex){
-		            ex.printStackTrace();
-		            return null;
-		        }
-		    }*/
-
-			
-//		}).filter(x->x!=null ).addSink(flinkKafkaProducer);
-		
-		
-		/*messageStream.map(new MapFunction<String, String>() {
-		   
-
-			@Override
-		    
-		    public String map(String value) throws Exception {
-		    	
-		        ObjectMapper mapper = new ObjectMapper();
-		        try {
-		        	JsonNode rootNode = mapper.readValue(value, JsonNode.class);
-		            if (rootNode.isObject()) {
-//		                ObjectNode obj = (ObjectNode) rootNode;
-		            	ObjectNode obj = mapper.convertValue(rootNode, ObjectNode.class);
-		                if (obj.has("temp")) {
-		                    System.out.println("a=" + obj.get("temp").asInt()+"fd"+obj.toString());
-		                    if(obj.get("temp").asInt()>72) {
-		                    	return obj.toString();
-		                    }
-		                   else {
-		                	   System.out.println("a=" + obj.get("temp").asInt());
-//		                	   writeToFile(obj.toString());
-		                	   if(file!=null ) {
-		                		   fw=new FileWriter(file);
-		                		   fw.write(obj.toString());
-		                	   }
-		                	   else {
-		                		   file = new File("C:\\Users\\priya\\assignmentWorkspace\\DataCenterNode\\src\\edu\\rit\\ds\\sensorData.txt");
-		                	   }
-		                	    fw.write(obj.toString());
-		                		 
-		                    }
-		                }
-		            }
-		            return null;
-		        }catch (java.io.IOException ex){
-		            ex.printStackTrace();
-		            return null;
-		        }
-		    }
-		}).filter(x->x!=null ).addSink(flinkKafkaProducer);*/
-		
-	/*FlinkKafkaProducer09<String> flinkKafkaProducer = createStringProducer("test1", "localhost:9092");
-		
-		messageStream.addSink(flinkKafkaProducer);*/
+		});
+		FlinkKafkaProducer09<String> flinkDcToApp = new FlinkKafkaProducer09<>("localhost:9092", "relayDCToAppServer", new SimpleStringSchema());
+		newData.addSink(flinkDcToApp);
+		System.out.println(newData.print());
 		env.execute();
 	}
 	public FlinkKafkaProducer09<String> createStringProducer(String topic, String kafkaAddress) {
@@ -276,36 +91,7 @@ public class FlinkConsumer implements Serializable {
 	public static void main(String args[]) throws Exception {
 		FlinkConsumer consumer = new FlinkConsumer();
 		consumer.transform();
-		/*Map<String,String> map=new HashMap<>();
-		map.put("880", "{\"id\":880,\"latitude\":41.00000000000006,\"longitude\":-122.0,\"temp\":80}");
-		map.put("8801", "{\"id\":8801,\"latitude\":41.00000000000006,\"longitude\":-122.0,\"temp\":80}");
-		System.out.println(consumer.arrafy(map));*/
 	}
-	
-	/*
-	public void writeToFile(String s) {
-		if(fw==null) {
-			try {
-				fw= new FileWriter(file);
-				fw.write(s);
-		    	fw.flush();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		else {
-			try {
-				fw.write(s);
-				fw.flush();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-	    	
-		}
-		
-	}*/
 
 }
 interface KafkaInterface {
