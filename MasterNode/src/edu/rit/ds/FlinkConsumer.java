@@ -17,8 +17,9 @@ public class FlinkConsumer {
 		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.enableCheckpointing(5000);
 		DataStream<String> messageStream = env
-				.addSource(new FlinkKafkaConsumer09<>("test", new SimpleStringSchema(), properties));
-		FlinkKafkaProducer09<String> flinkKafkaProducer = createStringProducer("test1", "localhost:9092");
+				.addSource(new FlinkKafkaConsumer09<>("generateLoad", new SimpleStringSchema(), properties));
+		FlinkKafkaProducer09<String> flinkKafkaProducer = createStringProducer("relayMasterToDC", "localhost:9092");
+		//System.out.println(flinkKafkaProducer);
 		messageStream.addSink(flinkKafkaProducer);
 		env.execute();
 	}
