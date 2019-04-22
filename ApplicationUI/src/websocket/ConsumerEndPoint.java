@@ -14,6 +14,12 @@ import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+
 @ServerEndpoint(value = "/ConsumerEndPoint", decoders = MessageDecoder.class, encoders = MessageEncoder.class)
 public class ConsumerEndPoint {
     private Session session;
@@ -28,9 +34,20 @@ public class ConsumerEndPoint {
 
     @OnMessage
     public void onMessage(Session session, Message message) throws IOException, EncodeException {
-    	System.out.println("onmessage"+DataStore.jsonStringData);
+    	System.out.println("onmessage");
+    	MongoClient mongo = new MongoClient("localhost", 27017);
+        DB db = mongo.getDB("IOTDeviceData");
+        DBCollection collectionRecent = db.getCollection("RecentIOTData");
+        DBCursor cursor = collectionRecent.find();
+        
+        if(cursor.hasNext()) {
+        	DBObject obj = cursor.next();
+        	System.out.println("obj:"+obj);
+        	String jsonString = obj.get("iotData").toString();
+        	System.out.println("jsonString:"+jsonString);
+        	message.setContent(jsonString);
+        }
         message.setFrom(users.get(session.getId()));
-        message.setContent(DataStore.jsonStringData);
         session.getBasicRemote().sendObject(message);
     }
 

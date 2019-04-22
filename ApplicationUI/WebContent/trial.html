@@ -67,25 +67,33 @@ d3.json("us.json").then(function(topo) {
  		console.log("interval")
  		ws.onmessage = function(event) {
  			console.log("in event")
- 	        console.log(event.data);
+ 	        data = event.data
+ 	       	data = data.replace(String.fromCharCode(92),String.fromCharCode(92,92));
  			data = JSON.parse(event.data);
-        	dataArr = data.iotData;
+ 			
+ 			console.log(data)
+ 			
+        	dataArr = data.content;
+ 			console.log(dataArr)
   	       	locatnArr = []
   	       	colrArr = []
   	       	color = ["blue", "orange", "red"]
   	       	for( i=0; i < dataArr.length; i++){
   	       		index = 0
   	       		cityData = dataArr[i];
+  	       		console.log(cityData)
   	       		if(cityData.temp > 70){
   	       			index = 1
   	       		}
   	       		if(cityData.temp > 80){
   	       			index = 2
   	       		}
-  	       		locatnArr.push([cityData.longitude, cityData.latitude])
+  	       		locatnArr.push([Number(cityData.longitude), Number(cityData.latitude)])
   	       		colrArr.push(color[index])
   	       	}
   	       	var i = -1
+  	      console.log(locatnArr);
+  	      console.log(colrArr);
   	       	svg.selectAll("circle")
 	  	   		.data(locatnArr).enter()
 	  	   		.append("circle")
@@ -97,7 +105,7 @@ d3.json("us.json").then(function(topo) {
 	  				return colrArr[i]
 	  	   		});
  	    };  
- 	   	ws.send("getData");
+ 	   	//ws.send("getData");
  	   	
 	}, 10000);
        

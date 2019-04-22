@@ -5,6 +5,12 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Properties;
 
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer09;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer09;
+import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
 import org.apache.flink.util.IterableIterator;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -13,14 +19,23 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.bson.Document;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.util.JSON;
 
 import websocket.ConsumerEndPoint;
 
 public class DataStore {
-
+/*
 	private final static String TOPIC = "relayDCToAppServer";
     private final static String BOOTSTRAP_SERVERS ="localhost:9092";
     private static Consumer<Long, String> consumer = null;
@@ -97,10 +112,77 @@ public class DataStore {
     	return recentData;
     }
     */
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		setConsumerObject();
 		setConsumerData();
 	}
-
+*/
+	
+	
+	public void transform() throws Exception {
+		Properties properties = new Properties();
+		properties.setProperty("bootstrap.servers", "localhost:9092");
+		properties.setProperty("zookeeper.connect", "localhost:2181");
+		properties.setProperty("group.id", "group01");
+		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+		env.enableCheckpointing(5000);
+		DataStream<String> messageStream = env
+				.addSource(new FlinkKafkaConsumer09<>("relayDCToAppServer", new SimpleStringSchema(), properties));
+		messageStream.addSink(new MongoDBDriver());
+		env.execute();
+	}
+	public FlinkKafkaProducer09<String> createStringProducer(String topic, String kafkaAddress) {
+		return new FlinkKafkaProducer09<>(kafkaAddress, topic, new SimpleStringSchema());
+	}
+	public static void main(String args[]) throws Exception {
+		DataStore consumer = new DataStore();
+		consumer.transform();
+	}
+	
 }
+
+class MongoDBDriver extends RichSinkFunction<String>{
+
+	@Override
+	public void invoke(String streamValue) throws Exception {
+		// TODO Auto-generated method stub
+		try {
+	        // Get config from the config file.
+	        JSONParser parser = new JSONParser();
+	        Object configObject = parser.parse(streamValue);
+	        JSONObject json = (JSONObject) configObject;
+	        MongoClient mongo = new MongoClient("localhost", 27017);
+	        DB db = mongo.getDB("IOTDeviceData");
+	        DBCollection collection = db.getCollection("IOTDataGenerated");
+	        BasicDBObject bson = (BasicDBObject) JSON.parse(streamValue);
+	        collection.insert(bson);
+	        //System.out.println(bson);
+	        DBCollection collectionRecent = db.getCollection("RecentIOTData");
+	        DBObject record = collectionRecent.findOne();
+	        System.out.println("record"+record);
+	        if (record == null) {
+	        	collectionRecent.insert(bson);
+	        } else {
+	        	String collectnDate = (String) record.get("date");
+	        	Double collectnDateDouble = Double.valueOf(collectnDate);
+	        	String newDate = (String) json.get("date");
+	        	Double newDateDouble = Double.valueOf(newDate);
+	        	if(newDateDouble > collectnDateDouble) {
+	        		DBObject query = new BasicDBObject();
+	        		collectionRecent.remove(query);
+	        		collectionRecent.insert(bson);
+	        	}
+	        }
+	        
+	        
+	        mongo.close();
+	      } catch (Exception e) {
+	        e.printStackTrace();
+	      }
+	}
+	
+	
+	
+}
+
