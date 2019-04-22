@@ -13,8 +13,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 
 public class DataGenerator {
 
@@ -31,7 +29,7 @@ public class DataGenerator {
 		generateMap(grid);
 //		dumpDataCitiesJSON();
 		startAllNodes();
-		traverseFire(2, 0, "E");
+		traverseFire(20, 0, "E");
 		System.out.println("END");
 	}
 
