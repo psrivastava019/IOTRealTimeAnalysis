@@ -160,7 +160,6 @@ class MongoDBDriver extends RichSinkFunction<String>{
 	        //System.out.println(bson);
 	        DBCollection collectionRecent = db.getCollection("RecentIOTData");
 	        DBObject record = collectionRecent.findOne();
-	        System.out.println("record"+record);
 	        if (record == null) {
 	        	collectionRecent.insert(bson);
 	        } else {
@@ -172,10 +171,11 @@ class MongoDBDriver extends RichSinkFunction<String>{
 	        		DBObject query = new BasicDBObject();
 	        		collectionRecent.remove(query);
 	        		collectionRecent.insert(bson);
+	        		System.out.println(bson);
 	        	}
 	        }
 	        
-	        
+	         	
 	        mongo.close();
 	      } catch (Exception e) {
 	        e.printStackTrace();

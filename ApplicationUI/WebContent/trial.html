@@ -45,55 +45,53 @@ d3.json("us.json").then(function(topo) {
     d3.selectAll("svg > *").remove();
   	document.getElementsByTagName('BODY')[0].innerHTML = '<h1></h1>';
   	var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);
-  	
-	svg.selectAll("path")
-      .data(states).enter()
-      .append("path")
-      .attr("class", "feature")
-      .style("fill", "green")
-      .attr("d", path);
-  	svg.append("path")
-      .datum(topojson.mesh(topo, topo.objects.states, function(a, b) { return a !== b; }))
-      .attr("class", "mesh")
-      .attr("d", path);
- 	
-    var host = document.location.host;
+  	var host = document.location.host;
     var pathname = document.location.pathname;
-    
-    
-    
  	setInterval(() => {
+ 		
  		var ws = new WebSocket("ws://" +host   + "/Forest/ConsumerEndPoint");
  		console.log("interval")
  		ws.onmessage = function(event) {
- 			console.log("in event")
  	        data = event.data
- 	       	data = data.replace(String.fromCharCode(92),String.fromCharCode(92,92));
+ 	       	data = data.replace(/\\/g, "");
  			data = JSON.parse(event.data);
- 			
- 			console.log(data)
- 			
         	dataArr = data.content;
- 			console.log(dataArr)
+        	var dataArrJson = JSON.parse(dataArr)
+        	console.log(dataArrJson.length)
+        	console.log(dataArrJson)
   	       	locatnArr = []
   	       	colrArr = []
   	       	color = ["blue", "orange", "red"]
-  	       	for( i=0; i < dataArr.length; i++){
+        	var aboveCount = 0;
+  	       	for( i=0; i < dataArrJson.length; i++){
   	       		index = 0
-  	       		cityData = dataArr[i];
-  	       		console.log(cityData)
+  	       		cityData = dataArrJson[i];
   	       		if(cityData.temp > 70){
+  	       			aboveCount+=1
   	       			index = 1
   	       		}
   	       		if(cityData.temp > 80){
+  	       			//aboveCount+=1
   	       			index = 2
   	       		}
-  	       		locatnArr.push([Number(cityData.longitude), Number(cityData.latitude)])
+  	       		locatnArr.push([cityData.longitude, cityData.latitude])
   	       		colrArr.push(color[index])
   	       	}
+  	       	console.log("aboveCount:"+aboveCount)
+  	       	svg.selectAll("path")
+		      .data(states).enter()
+		      .append("path")
+		      .attr("class", "feature")
+		      .style("fill", "green")
+		      .attr("d", path);
+		  	svg.append("path")
+		      .datum(topojson.mesh(topo, topo.objects.states, function(a, b) { return a !== b; }))
+		      .attr("class", "mesh")
+		      .attr("d", path);
+		 	
+		    
   	       	var i = -1
-  	      console.log(locatnArr);
-  	      console.log(colrArr);
+  	       	svg.selectAll("circle").remove()
   	       	svg.selectAll("circle")
 	  	   		.data(locatnArr).enter()
 	  	   		.append("circle")
@@ -107,7 +105,7 @@ d3.json("us.json").then(function(topo) {
  	    };  
  	   	//ws.send("getData");
  	   	
-	}, 10000);
+	}, 1000);
        
 });
 

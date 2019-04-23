@@ -42,10 +42,9 @@ public class ConsumerEndPoint {
         
         if(cursor.hasNext()) {
         	DBObject obj = cursor.next();
-        	System.out.println("obj:"+obj);
         	String jsonString = obj.get("iotData").toString();
-        	System.out.println("jsonString:"+jsonString);
         	message.setContent(jsonString);
+        	System.out.println("jsonString::"+jsonString);
         }
         message.setFrom(users.get(session.getId()));
         session.getBasicRemote().sendObject(message);
