@@ -36,118 +36,81 @@
 var width = 950,
     height = 550;
 
-// set projection
 var projection = d3.geoMercator();
-//console.log(projection);
-// create path variable
-var path = d3.geoPath()
-    .projection(projection);
-
-//console.log(path);
+var path = d3.geoPath().projection(projection);
 d3.json("us.json").then(function(topo) { 
-	//console.log(topo);
-
-  	states = topojson.feature(topo, topo.objects.states).features
-
-  	// set projection parameters
-  	projection
-      .scale(1000)
-      .center([-106, 37.5])
-
-    // create svg variable
-    
-
-	//console.log(projection(aa),projection(bb));
-
-	       
-     
-  	setInterval(() => {
-  	// add states from topojson
-  	d3.selectAll("svg > *").remove();
-  	document.getElementsByTagName('BODY')[0].innerHTML = '<h1></h1>';
-  	var svg = d3.select("body").append("svg")
-    				.attr("width", width)
-    				.attr("height", height);
   	
-  		svg.selectAll("path")
-  	      .data(states).enter()
-  	      .append("path")
-  	      .attr("class", "feature")
-  	      .style("fill", "green")
-  	      .attr("d", path);
-
-  	    // put boarder around states 
-  	  	svg.append("path")
-  	      .datum(topojson.mesh(topo, topo.objects.states, function(a, b) { return a !== b; }))
-  	      .attr("class", "mesh")
-  	      .attr("d", path);
-
-
-  	//Creating a new XMLHttpRequest object
-  		reqURL = "/ApplicationUI/ForestForeDetectionController";
-	    var xmlhttp;
-	    if (window.XMLHttpRequest){
-	        xmlhttp = new XMLHttpRequest(); //for IE7+, Firefox, Chrome, Opera, Safari
-	    } else {
-	        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP"); //for IE6, IE5
-	    }
-	    //Create a asynchronous GET request
-	    xmlhttp.open("GET", reqURL, true);
-	     
-	    //When readyState is 4 then get the server output
-	    xmlhttp.onreadystatechange = function() {
-	        if (xmlhttp.readyState == 4) {
-	            if (xmlhttp.status == 200)
-	            {
-	            	data = xmlhttp.responseText
-	            	data = JSON.parse(data);
-	            	
-	            	dataArr = data.iotData;
-	      	       	//console.log(dataArr.length)
-	      	       	locatnArr = []
-	      	       	colrArr = []
-	      	       	color = ["blue", "orange", "red"]
-	      	       	for( i=0; i < dataArr.length; i++){
-	      	       		index = 0
-	      	       		cityData = dataArr[i];
-	      	       		if(cityData.temp > 70){
-	      	       			index = 1
-	      	       		}
-	      	       		if(cityData.temp > 80){
-	      	       			index = 2
-	      	       		}
-	      	       		locatnArr.push([cityData.longitude, cityData.latitude])
-	      	       		colrArr.push(color[index])
-	      	       		
-	      	       	}
-	      	       	var i = -1
-	      	       	svg.selectAll("circle")
-	    	  	   		.data(locatnArr).enter()
-	    	  	   		.append("circle")
-	    	  	   		.attr("cx", function (d) { return projection(d)[0]; })
-	    	  	   		.attr("cy", function (d) { return projection(d)[1]; })
-	    	  	   		.attr("r", "2px")
-	    	  	   		.attr("fill", function(d){
-	    	  	   			i+=1
-	    	  	   				console.log(i)
-	    	  				 return colrArr[i]
-	    	  	   		});
-	      	   		
-	      	       	
-
-
-	            }
-	            
-	        }
-	    };
-	     
-	    xmlhttp.send(null);
-
-  	    
-  		
-	}, 5000);
+	states = topojson.feature(topo, topo.objects.states).features
+  	projection.scale(1000).center([-106, 37.5])
+    d3.selectAll("svg > *").remove();
+  	document.getElementsByTagName('BODY')[0].innerHTML = '<h1></h1>';
+  	var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);
+  	
+	svg.selectAll("path")
+      .data(states).enter()
+      .append("path")
+      .attr("class", "feature")
+      .style("fill", "green")
+      .attr("d", path);
+  	svg.append("path")
+      .datum(topojson.mesh(topo, topo.objects.states, function(a, b) { return a !== b; }))
+      .attr("class", "mesh")
+      .attr("d", path);
+ 	
+    var host = document.location.host;
+    var pathname = document.location.pathname;
+    
+    
+    
+ 	setInterval(() => {
+ 		var ws = new WebSocket("ws://" +host   + "/Forest/ConsumerEndPoint");
+ 		console.log("interval")
+ 		ws.onmessage = function(event) {
+ 			console.log("in event")
+ 	        data = event.data
+ 	       	data = data.replace(String.fromCharCode(92),String.fromCharCode(92,92));
+ 			data = JSON.parse(event.data);
+ 			
+ 			console.log(data)
+ 			
+        	dataArr = data.content;
+ 			console.log(dataArr)
+  	       	locatnArr = []
+  	       	colrArr = []
+  	       	color = ["blue", "orange", "red"]
+  	       	for( i=0; i < dataArr.length; i++){
+  	       		index = 0
+  	       		cityData = dataArr[i];
+  	       		console.log(cityData)
+  	       		if(cityData.temp > 70){
+  	       			index = 1
+  	       		}
+  	       		if(cityData.temp > 80){
+  	       			index = 2
+  	       		}
+  	       		locatnArr.push([Number(cityData.longitude), Number(cityData.latitude)])
+  	       		colrArr.push(color[index])
+  	       	}
+  	       	var i = -1
+  	      console.log(locatnArr);
+  	      console.log(colrArr);
+  	       	svg.selectAll("circle")
+	  	   		.data(locatnArr).enter()
+	  	   		.append("circle")
+	  	   		.attr("cx", function (d) { return projection(d)[0]; })
+	  	   		.attr("cy", function (d) { return projection(d)[1]; })
+	  	   		.attr("r", "2px")
+	  	   		.attr("fill", function(d){
+	  	   			i+=1
+	  				return colrArr[i]
+	  	   		});
+ 	    };  
+ 	   	//ws.send("getData");
+ 	   	
+	}, 10000);
        
 });
+
 
 </script>
     
