@@ -18,6 +18,7 @@ public class FlinkConsumer {
 		env.enableCheckpointing(5000);
 		DataStream<String> messageStream = env
 				.addSource(new FlinkKafkaConsumer09<>("generateLoad", new SimpleStringSchema(), properties));
+		messageStream.print();
 		FlinkKafkaProducer09<String> flinkKafkaProducer = createStringProducer("relayMasterToDC", "localhost:9092");
 		//System.out.println(flinkKafkaProducer);
 		messageStream.addSink(flinkKafkaProducer);

@@ -6,12 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.Consumer;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -47,6 +42,7 @@ public class FlinkConsumer implements Serializable {
 			newList.add(entry.getValue());
 		}
 		json.put("iotData", newList);
+        json.put("date", String.valueOf(System.currentTimeMillis()));
 		return json.toJSONString();
 	}
 	public void transform() throws Exception {
@@ -58,7 +54,6 @@ public class FlinkConsumer implements Serializable {
 		env.enableCheckpointing(5000);
 		DataStream<String> messageStream = env
 				.addSource(new FlinkKafkaConsumer09<>("relayMasterToDC",  new SimpleStringSchema(), properties));
-
 		DataStream<String> newData = messageStream.flatMap(new FlatMapFunction<String, String>() {
 			Map<String,ObjectNode> map=new HashMap<>();
 			public void flatMap(String value, Collector<String> out) throws Exception {
@@ -68,21 +63,21 @@ public class FlinkConsumer implements Serializable {
 					if (rootNode.isObject()) {
 						ObjectNode obj = mapper.convertValue(rootNode, ObjectNode.class);
 						if (obj.has("temp")) {
-							System.out.println("a=" + obj.get("temp").asInt()+"fd"+obj.toString());
 							map.put(obj.get("id").toString(), obj);
 						}
 					}
-					System.out.println("map:" + arrafy(map));
-					out.collect(arrafy(map));
+					//System.out.println("map:" + arrafy(map));
+
 				}
 				catch (java.io.IOException ex){
 						ex.printStackTrace();
 					}
+				out.collect(arrafy(map));
 			}
 		});
 		FlinkKafkaProducer09<String> flinkDcToApp = new FlinkKafkaProducer09<>("localhost:9092", "relayDCToAppServer", new SimpleStringSchema());
 		newData.addSink(flinkDcToApp);
-		System.out.println(newData.print());
+		//System.out.println(newData.print());
 		env.execute();
 	}
 	public FlinkKafkaProducer09<String> createStringProducer(String topic, String kafkaAddress) {

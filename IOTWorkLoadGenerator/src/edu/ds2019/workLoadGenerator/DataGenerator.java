@@ -12,7 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DataGenerator {
 
@@ -21,22 +22,35 @@ public class DataGenerator {
 	private static double longitude = -122;
 	private static HashMap<ArrayList<Integer>, IOTDevice> deviceMap = new HashMap<ArrayList<Integer>, IOTDevice>();
 	private static HashMap<IOTDevice, HashMap<String, IOTDevice>> gridMap = new HashMap<IOTDevice, HashMap<String, IOTDevice>>();
-	private static String path = "C:\\Users\\kamat\\Desktop\\DS\\project";
-	
+
+	private static HashMap<Integer, IOTDevice> modifiedMapIOT = new HashMap<>();
+
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		ArrayList<ArrayList<String>> grid = gridGenerate(44, 88);
 		generateMap(grid);
-//		dumpDataCitiesJSON();
-		startAllNodes();
+		runKafkaForMap();
 		traverseFire(20, 0, "E");
 		System.out.println("END");
 	}
 
-	private static void startAllNodes() {
+	/*private static void startAllNodes() {
 		for(IOTDevice device : gridMap.keySet()) {
 			ForestFireProducer produceFire = new ForestFireProducer(device);
 			new Thread(produceFire).start();
+		}
+	}*/
+
+	private static void runKafkaForMap(){
+		ObjectMapper mapper=new ObjectMapper();
+		System.out.println("count:"+modifiedMapIOT.values().size());
+		for(IOTDevice device: modifiedMapIOT.values()){
+			try {
+				ForestFireProducer.kafkaProducer(mapper.writeValueAsString(device), device.getId());
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	private static void traverseFire(int row, int column, String directn) {
@@ -153,8 +167,10 @@ public class DataGenerator {
 				 * System.out.println(device1); System.out.println(device2);
 				 * System.out.println(device3);
 				 */
+				modifiedMapIOT = new HashMap<>();
 				if(device1 != null && !visited.containsKey(device1.getId())) {
 					device1.setTemp(rand.ints(80, 100).findFirst().getAsInt());
+					modifiedMapIOT.put(device1.getId(), device1);
 					visited.put(device1.getId(), true);
 					queue.add(device1);
 					/*
@@ -164,6 +180,7 @@ public class DataGenerator {
 				}
 				if(device2 != null && !visited.containsKey(device2.getId())) {
 					device2.setTemp(rand.ints(80, 100).findFirst().getAsInt());
+					modifiedMapIOT.put(device2.getId(), device2);
 					visited.put(device2.getId(), true);
 					queue.add(device2);
 					/*
@@ -173,6 +190,7 @@ public class DataGenerator {
 				}
 				if(device3 != null && !visited.containsKey(device3.getId())) {
 					device3.setTemp(rand.ints(80, 100).findFirst().getAsInt());
+					modifiedMapIOT.put(device3.getId(), device3);
 					visited.put(device3.getId(), true);
 					queue.add(device3);
 					/*
@@ -183,6 +201,7 @@ public class DataGenerator {
 				
 				try {
 //					dumpDataCitiesJSON();
+					runKafkaForMap();
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
@@ -225,6 +244,7 @@ public class DataGenerator {
 				if(grid.get(row).get(col).equals("1")) {
 					IOTDevice device = new IOTDevice(nextId, latitude, longitude);
 					deviceMap.put(new ArrayList<Integer>(Arrays.asList(row, col)), device);
+					modifiedMapIOT.put(device.getId(), device);
 					nextId += 1;
 					longitude += 0.3;
 				}
@@ -264,36 +284,4 @@ public class DataGenerator {
 			}
 		}
 	}
-	
-/*	private static void dumpDataCitiesJSON() {
-		System.out.println("#############################################################");
-		try {
-			File file = new File(path+"\\cities.json");
-			if(file.exists()) {
-				file.delete();
-			}
-			BufferedWriter out = new BufferedWriter(new FileWriter(new File(path+"\\cities.json")));
-			IOTDeviceMaster deviceData = new IOTDeviceMaster();
-			ArrayList<IOTDevice> deviceList = new ArrayList<IOTDevice>();
-			int count = 0;
-			for(IOTDevice device : gridMap.keySet()) {
-				if(device.getTemp() > 70) {
-					count+=1;
-				}
-				deviceList.add(device);
-			}
-			System.out.println("count:"+count);
-			deviceData.setIotData(deviceList);
-			ObjectMapper mapper = new ObjectMapper();
-			String cityJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(deviceData);
-			//Gson gson = new Gson();
-			//String cityJson = gson.toJson(deviceData);
-			out.append(cityJson);
-			out.close();
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}*/
 }

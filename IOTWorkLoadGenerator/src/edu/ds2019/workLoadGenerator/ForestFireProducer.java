@@ -1,17 +1,11 @@
 package edu.ds2019.workLoadGenerator;
-import java.util.ArrayList;
-import java.util.Map;
 import java.util.Properties;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.Serializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-public class ForestFireProducer implements Runnable {
+public class ForestFireProducer/* implements Runnable*/ {
 	
 	
 	static  KafkaProducer kafkaProducer=null;
@@ -20,7 +14,7 @@ public class ForestFireProducer implements Runnable {
 		this.device = device;
 	}
 	
-	@Override
+	/*@Override
 	public void run() {
 		while(true) {
 			ObjectMapper mapper=new ObjectMapper();
@@ -39,20 +33,19 @@ public class ForestFireProducer implements Runnable {
 			}
 		}
 	}
-	
-	public static void kafkaProducer(String jsonString) {
+	*/
+	public static void kafkaProducer(String jsonString, Integer id) {
 		if(kafkaProducer==null) {
 			Properties properties = new Properties();
 			properties.put("bootstrap.servers", "localhost:9092");
 			properties.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 			properties.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-
 			kafkaProducer = new KafkaProducer(properties);
 		}
 		
 		try {
-			System.out.println("jsonString generate:"+jsonString);
-			kafkaProducer.send(new ProducerRecord("generateLoad", jsonString));
+			//System.out.println("jsonString generate:"+jsonString);
+			kafkaProducer.send(new ProducerRecord("generateLoad",/* String.valueOf(id),*/ jsonString));
 
 		} catch (Exception e) {
 			e.printStackTrace();
