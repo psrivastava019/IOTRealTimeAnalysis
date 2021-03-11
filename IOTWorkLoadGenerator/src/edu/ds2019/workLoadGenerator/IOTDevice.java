@@ -6,7 +6,7 @@ import java.util.Date;
 public class IOTDevice implements Serializable{
 
 	/**
-	 * 
+	 * adding test comment
 	 */
 	private static final long serialVersionUID = 1L;
 	private int id;
